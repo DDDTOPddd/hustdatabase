@@ -1,0 +1,14 @@
+SELECT pro_c_id
+FROM (
+    SELECT pro_c_id,
+           SUM(CASE WHEN pro_type = 1 THEN 1 ELSE 0 END) AS finances_num,
+           SUM(CASE WHEN pro_type = 3 THEN 1 ELSE 0 END) AS fund_num
+    FROM (
+        SELECT DISTINCT pro_c_id, pro_type, pro_pif_id
+        FROM property
+        WHERE pro_type IN (1, 3)
+    ) AS distinct_products
+    GROUP BY pro_c_id
+    HAVING finances_num >= 3 AND finances_num > fund_num
+) AS investment_preference
+ORDER BY pro_c_id ASC;

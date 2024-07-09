@@ -1,0 +1,66 @@
+delimiter $$
+create procedure sp_night_shift_arrange(in start_date date, in end_date date)
+begin
+DECLARE done INT DEFAULT FALSE;
+DECLARE iswait INT DEFAULT FALSE;
+DECLARE waitdr char(30);
+DECLARE currentdate date;
+DECLARE drtype INT;
+DECLARE dr,n1,n2 CHAR(30);
+
+DECLARE drc CURSOR FOR SELECT e_name,e_type from employee where e_type<3;
+DECLARE nrc CURSOR FOR SELECT e_name from employee where e_type=3 ;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+OPEN drc;
+OPEN nrc;
+SET currentdate=start_date;
+while currentdate<=end_date do
+    if weekday(currentdate)<=4 and iswait then
+        SET dr=waitdr;
+        SET iswait=FALSE;
+    else
+        FETCH drc INTO dr, drtype;
+        IF done THEN
+            CLOSE drc;
+            OPEN drc;
+            FETCH drc INTO dr, drtype;
+            SET done = FALSE;
+        END IF;
+        IF weekday(currentdate) >4 AND drtype = 1 then
+            SET iswait=TRUE;
+            SET waitdr=dr;
+            FETCH drc INTO dr, drtype;
+            IF done THEN
+                CLOSE drc;
+                OPEN drc;
+                FETCH drc INTO dr, drtype;
+                SET done = FALSE;
+            END IF;
+        END if;
+    END if;
+    FETCH nrc INTO n1;
+    if done then 
+        CLOSE nrc;
+        OPEN nrc;
+        FETCH nrc INTO n1;
+        SET done=FALSE;
+    END if;
+    
+    FETCH nrc INTO n2;
+    if done then 
+        CLOSE nrc;
+        OPEN nrc;
+        FETCH nrc INTO n2;
+        SET done=FALSE;
+    END if;
+    INSERT INTO night_shift_schedule VALUES (currentdate, dr, n1, n2);
+    SET currentdate=date_add(currentdate,interval 1 day);
+end while;
+
+CLOSE drc;
+CLOSE nrc;
+
+end$$
+
+delimiter ;

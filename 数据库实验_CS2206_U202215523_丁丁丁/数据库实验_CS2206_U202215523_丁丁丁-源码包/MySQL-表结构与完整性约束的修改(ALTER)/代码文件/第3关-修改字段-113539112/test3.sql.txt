@@ -1,0 +1,5 @@
+use MyDb;
+alter table addressBook 
+    modify QQ char(12),
+    rename column weixin to wechat;
+#请在以下空白处添加适当的SQL语句，实现编程要求
